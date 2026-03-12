@@ -253,6 +253,26 @@ vibeguard guard --strict
 **문제 있으면** → `vibeguard undo`
 """
 
+_VIBEGUARD_CURSOR_MARKER = "# --- VibeGuard Rules (vibeguard export cursor) ---"
+
+
+def _write_cursorrules(root) -> str:
+    """.cursorrules 파일에 VibeGuard 규칙을 씁니다.
+    반환값: 'created' | 'appended' | 'skipped'
+    """
+    cursorrules_path = root / ".cursorrules"
+    if cursorrules_path.exists():
+        existing = cursorrules_path.read_text(encoding="utf-8")
+        if _VIBEGUARD_CURSOR_MARKER in existing:
+            return "skipped"
+        append_content = f"\n\n{_VIBEGUARD_CURSOR_MARKER}\n{_CURSOR_RULES}\n"
+        cursorrules_path.write_text(existing + append_content, encoding="utf-8")
+        return "appended"
+    else:
+        cursorrules_path.write_text(f"{_VIBEGUARD_CURSOR_MARKER}\n{_CURSOR_RULES}\n", encoding="utf-8")
+        return "created"
+
+
 TEMPLATES = {
     "claude": {
         "RULES.md": _RULES,
@@ -300,3 +320,13 @@ def run_export(args):
         (export_root / name).write_text(content, encoding="utf-8")
     (export_root / "README.md").write_text(f"# VibeGuard 내보내기: {args.tool}\n\n프로젝트 루트의 `AI_DEV_SYSTEM_SINGLE_FILE.md`를 주요 규칙 파일로 유지하세요.\n", encoding="utf-8")
     print(f"{export_root} 생성 완료")
+
+    if args.tool == "cursor":
+        result = _write_cursorrules(root)
+        if result == "created":
+            print(".cursorrules 생성 완료")
+        elif result == "appended":
+            print("경고: 기존 .cursorrules 파일이 있습니다.")
+            print("      덮어쓰지 않고 VibeGuard 규칙을 뒤에 추가했습니다.")
+        else:
+            print("참고: .cursorrules에 이미 VibeGuard 규칙이 있습니다 (건너뜀)")

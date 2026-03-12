@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 from vibeguard.core.ai_dev_system import AI_DEV_SYSTEM_CONTENT
-from vibeguard.commands.export_cmd import AGENTS_MD_CONTENT, TEMPLATES
+from vibeguard.commands.export_cmd import AGENTS_MD_CONTENT, TEMPLATES, _write_cursorrules
 
 GITIGNORE_CONTENT = """\
 # macOS
@@ -78,7 +78,17 @@ def run_init(args):
         )
         print(f"[생성]   vibeguard_exports/{tool}/")
 
-    # 4. .gitignore
+    # 4. .cursorrules (Cursor 도구일 때만)
+    if tool == "cursor":
+        result = _write_cursorrules(root)
+        if result == "created":
+            print(f"[생성]   .cursorrules")
+        elif result == "appended":
+            print(f"[추가]   .cursorrules (기존 파일 유지, VibeGuard 규칙 추가)")
+        else:
+            print(f"[건너뜀] .cursorrules 이미 VibeGuard 규칙이 있습니다")
+
+    # 5. .gitignore
     gitignore_path = root / ".gitignore"
     if gitignore_path.exists():
         print(f"[건너뜀] .gitignore 이미 존재합니다")
@@ -86,7 +96,7 @@ def run_init(args):
         gitignore_path.write_text(GITIGNORE_CONTENT, encoding="utf-8")
         print(f"[생성]   .gitignore")
 
-    # 5. git init (없을 경우에만)
+    # 6. git init (없을 경우에만)
     if not (root / ".git").exists():
         result = _run_git(["init"], cwd=root)
         if result.returncode == 0:
@@ -97,7 +107,7 @@ def run_init(args):
     else:
         print(f"[건너뜀] Git 저장소 이미 존재합니다")
 
-    # 6. 첫 번째 체크포인트
+    # 7. 첫 번째 체크포인트
     _run_git(["add", "-A"], cwd=root)
     result = _run_git(
         ["commit", "-m", "vibeguard: 초기 체크포인트 (vibeguard init)"],

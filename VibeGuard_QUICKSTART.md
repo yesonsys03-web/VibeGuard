@@ -163,12 +163,47 @@ vibeguard export claude
 
 ---
 
-# 13. Optional watch mode
-# 13. 실시간 감시
+# 13. Optional watch mode (실시간 감시) — 선택 사항
+# 13. watchdog 설치 후 실시간 감시 사용 가능
 
+> **watchdog이 뭔가요?**
+> VibeGuard가 파일 변화를 **실시간으로** 감지할 수 있게 해주는 도우미 프로그램이에요.
+> VibeGuard를 설치할 때 기본으로 포함되지 않아서, 따로 설치해야 해요.
+> `vibeguard watch` 명령어를 쓰지 않는다면 **설치 안 해도 됩니다.**
+
+**설치 방법 (둘 중 하나만 실행하세요)**
+
+uv로 설치한 경우:
+
+```
+uv add watchdog
+```
+
+pip으로 설치한 경우:
+
+```
 pip install watchdog
+```
 
+> **어떤 걸 써야 하나요?**
+> 6단계에서 `uv tool install .` 로 설치했으면 → `uv add watchdog`
+> `pip install -e .` 로 설치했으면 → `pip install watchdog`
+
+**설치 확인**
+
+```
+python3 -c "import watchdog; print('watchdog 설치 완료!')"
+```
+
+위 명령어 실행 후 `watchdog 설치 완료!` 가 출력되면 성공이에요.
+
+**실행**
+
+```
 vibeguard watch
+```
+
+파일이 바뀔 때마다 터미널에 알림이 나와요. 종료하려면 `Ctrl + C` 를 누르세요.
 
 ---
 

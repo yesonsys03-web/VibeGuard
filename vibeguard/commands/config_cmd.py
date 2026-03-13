@@ -1,6 +1,19 @@
 import os
+import json
 import getpass
+import urllib.request
 from pathlib import Path
+from typing import Optional
+
+_DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"
+_GEMINI_MODEL_FALLBACKS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-3-flash-preview",
+    "gemini-3.1-flash-lite-preview",
+    "gemini-3.1-pro-preview",
+]
+_CLEAR_GEMINI_MODEL = "__CLEAR_GEMINI_MODEL__"
 
 _PROVIDERS = [
     {
@@ -51,7 +64,9 @@ def _save_to_profile(profile: Path, key_name: str, api_key: str):
     export_line = f'export {key_name}="{api_key}"'
 
     if profile.exists():
-        lines = profile.read_text(encoding="utf-8", errors="ignore").splitlines(keepends=True)
+        lines = profile.read_text(encoding="utf-8", errors="ignore").splitlines(
+            keepends=True
+        )
         new_lines = []
         replaced = False
         for line in lines:
@@ -69,6 +84,97 @@ def _save_to_profile(profile: Path, key_name: str, api_key: str):
         profile.write_text(export_line + "\n", encoding="utf-8")
 
 
+def _fetch_gemini_models(api_key: str) -> list[str]:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+    req = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(req, timeout=20) as response:
+        result = json.loads(response.read())
+
+    models = []
+    for item in result.get("models", []):
+        name = item.get("name", "")
+        methods = item.get("supportedGenerationMethods", [])
+        if not name.startswith("models/gemini-"):
+            continue
+        if "generateContent" not in methods:
+            continue
+        model = name.split("/", 1)[1]
+        if any(
+            token in model for token in ["image", "embedding", "tts", "aqa", "live"]
+        ):
+            continue
+        models.append(model)
+
+    ordered = []
+    seen = set()
+    for model in _GEMINI_MODEL_FALLBACKS + sorted(models):
+        if model not in seen and model in models:
+            ordered.append(model)
+            seen.add(model)
+    return ordered
+
+
+def _select_gemini_model(api_key: Optional[str], current_model: str) -> Optional[str]:
+    print("Gemini 모델 설정 (선택사항)")
+    if current_model:
+        print(f"현재 GEMINI_MODEL: {current_model}")
+    else:
+        print(f"현재 GEMINI_MODEL: 기본값 사용 ({_DEFAULT_GEMINI_MODEL})")
+
+    models = []
+    source_label = "기본 추천 목록"
+    if api_key:
+        try:
+            models = _fetch_gemini_models(api_key)
+            if models:
+                source_label = "Google AI Studio 공식 사용 가능 모델"
+            else:
+                print(
+                    "Google AI Studio 모델 목록이 비어 있어 기본 추천 목록을 보여줍니다."
+                )
+        except Exception:
+            models = []
+            print(
+                "Google AI Studio 모델 목록을 가져오지 못해 기본 추천 목록을 보여줍니다."
+            )
+
+    if not models:
+        models = list(_GEMINI_MODEL_FALLBACKS)
+
+    print(f"모델 목록: {source_label}")
+    for i, model in enumerate(models, 1):
+        note = ""
+        if model == _DEFAULT_GEMINI_MODEL:
+            note = " (기본값)"
+        elif model == current_model:
+            note = " (현재값)"
+        print(f"  {i}. {model}{note}")
+    print(f"  {len(models) + 1}. 직접 입력")
+    clear_choice = None
+    if current_model:
+        clear_choice = len(models) + 2
+        print(f"  {clear_choice}. 설정 해제 (기본값 사용)")
+    print("  0. 변경 안 함")
+    print()
+
+    max_choice = clear_choice or (len(models) + 1)
+    choice = input(f"선택 (0-{max_choice}): ").strip()
+    if choice == "0" or not choice:
+        return None
+    if choice.isdigit():
+        choice_num = int(choice)
+        if 1 <= choice_num <= len(models):
+            return models[choice_num - 1]
+        if choice_num == len(models) + 1:
+            custom_model = input("Gemini 모델 ID를 입력하세요: ").strip()
+            return custom_model or None
+        if clear_choice and choice_num == clear_choice:
+            return _CLEAR_GEMINI_MODEL
+
+    print("잘못된 선택입니다. Gemini 모델 설정을 건너뜁니다.")
+    return None
+
+
 def run_config(args):
     print("=" * 50)
     print("  VibeGuard API 키 설정")
@@ -81,6 +187,12 @@ def run_config(args):
         is_set = bool(os.environ.get(p["key_name"]))
         status = "✓ 설정됨" if is_set else "✗ 없음"
         print(f"  {p['key_name']:<22}: {status}")
+    gemini_model = (os.environ.get("GEMINI_MODEL") or "").strip()
+    if gemini_model:
+        model_status = f"✓ 사용자 설정 ({gemini_model})"
+    else:
+        model_status = f"기본값 사용 ({_DEFAULT_GEMINI_MODEL})"
+    print(f"  {'GEMINI_MODEL':<22}: {model_status}")
     print()
 
     # 제공자 선택
@@ -111,6 +223,8 @@ def run_config(args):
         print("잘못된 선택입니다.")
         return
 
+    includes_gemini = any(p["id"] == "gemini" for p in selected)
+
     # API 키 입력
     print()
     collected = {}
@@ -123,8 +237,19 @@ def run_config(args):
             continue
         collected[p["key_name"]] = api_key
 
+    if includes_gemini:
+        print()
+        gemini_api_key = (
+            collected.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+        ).strip()
+        gemini_model = _select_gemini_model(gemini_api_key, gemini_model)
+        if gemini_model == _CLEAR_GEMINI_MODEL:
+            collected["GEMINI_MODEL"] = ""
+        elif gemini_model is not None:
+            collected["GEMINI_MODEL"] = gemini_model
+
     if not collected:
-        print("설정할 키가 없습니다.")
+        print("설정할 값이 없습니다.")
         return
 
     # 영구/임시 선택
@@ -149,7 +274,7 @@ def run_config(args):
         print("아래 명령어를 현재 터미널에 복사해서 실행하세요:")
         print()
         for key_name, api_key in collected.items():
-            print(f"  export {key_name}=\"{api_key}\"")
+            print(f'  export {key_name}="{api_key}"')
         print()
         print("(새 터미널을 열면 다시 입력해야 합니다)")
     else:

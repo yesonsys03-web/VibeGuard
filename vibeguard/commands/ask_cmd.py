@@ -1,9 +1,54 @@
 import os
 import json
+import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Optional
+
+from vibeguard.terminal_render import (
+    print_ai_response,
+    print_attempted_providers,
+    print_provider_status,
+    should_use_rich,
+)
 
 MAX_LINES = 300  # 너무 긴 파일은 앞부분만 사용
+DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"
+
+
+def _format_gemini_error(error: Exception, model: str) -> str:
+    if isinstance(error, urllib.error.HTTPError):
+        try:
+            detail = error.read().decode("utf-8", errors="ignore").strip()
+        except Exception:
+            detail = ""
+        if len(detail) > 500:
+            detail = detail[:500] + "..."
+        if error.code == 429:
+            message = [
+                f"Gemini API 호출 실패: HTTP 429 Too Many Requests (model={model})",
+                "잠시 후 다시 시도하거나, 다른 Gemini 모델을 쓰려면 `GEMINI_MODEL` 환경변수를 설정하세요.",
+                "계속 반복되면 Google AI Studio에서 rate limit / quota / billing 상태를 확인하세요.",
+            ]
+            if detail:
+                message.append(f"응답 본문: {detail}")
+            return "\n".join(message)
+        if error.code in (502, 503, 504):
+            status_text = {
+                502: "Bad Gateway",
+                503: "Service Unavailable",
+                504: "Gateway Timeout",
+            }.get(error.code, str(error.code))
+            message = [
+                f"Gemini API 호출 실패: HTTP {error.code} {status_text} (model={model})",
+                "Gemini 서버나 해당 모델이 일시적으로 요청을 처리하지 못하는 상태일 수 있습니다.",
+                "잠시 후 다시 시도하거나, 다른 Gemini 모델을 쓰려면 `GEMINI_MODEL` 환경변수를 설정하세요.",
+            ]
+            if detail:
+                message.append(f"응답 본문: {detail}")
+            return "\n".join(message)
+    return f"Gemini API 호출 실패: {error}"
+
 
 _SYSTEM_PROMPT = (
     "당신은 코딩을 전혀 모르는 사람도 이해할 수 있게 설명하는 선생님입니다. "
@@ -18,18 +63,56 @@ _MENU_ITEMS = [
     "AI가 이 파일을 수정할 때 주의해야 할 점이 있나요?",
 ]
 
+_SECTION_SPECS = [
+    ("## 1. 한 줄 요약", "이 파일이 하는 일을 한두 문장으로만 요약해주세요."),
+    (
+        "## 2. 주요 기능을 쉬운 말로 설명",
+        "핵심 기능을 코드 비유나 쉬운 예시로 설명해주세요.",
+    ),
+    (
+        "## 3. 다른 파일과 연결",
+        "이 파일이 어떤 파일/기능과 이어지는지 간단한 목록으로 설명해주세요.",
+    ),
+    (
+        "## 4. 수정할 때 주의할 점",
+        "AI나 사람이 수정할 때 조심해야 할 포인트를 짧은 목록으로 정리해주세요.",
+    ),
+]
+
+
+def _build_response_format(selected: list[int], question: Optional[str] = None) -> str:
+    sections = []
+    for index in selected:
+        title, guide = _SECTION_SPECS[index]
+        sections.append(f"{title}\n- {guide}")
+    if question:
+        sections.append(
+            "## 5. 추가 질문 답변\n- 사용자가 따로 묻는 질문에 직접 답해주세요."
+        )
+    return "\n\n".join(sections)
+
 
 def _has_api_key() -> bool:
-    return any(os.environ.get(k) for k in [
-        "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
-        "GLM_API_KEY", "MOONSHOT_API_KEY",
-    ])
+    return any(
+        os.environ.get(k)
+        for k in [
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY",
+            "GEMINI_API_KEY",
+            "GLM_API_KEY",
+            "MOONSHOT_API_KEY",
+        ]
+    )
 
 
 def _build_file_header(rel_path: str, content: str, line_count: int) -> str:
     truncated = line_count > MAX_LINES
     display_content = "\n".join(content.splitlines()[:MAX_LINES])
-    truncate_note = f"\n(파일이 길어서 앞 {MAX_LINES}줄만 포함했습니다. 전체 줄 수: {line_count}줄)\n" if truncated else ""
+    truncate_note = (
+        f"\n(파일이 길어서 앞 {MAX_LINES}줄만 포함했습니다. 전체 줄 수: {line_count}줄)\n"
+        if truncated
+        else ""
+    )
     suffix = Path(rel_path).suffix.lstrip(".") or "text"
     return f"""\
 파일명: {rel_path}
@@ -40,53 +123,50 @@ def _build_file_header(rel_path: str, content: str, line_count: int) -> str:
 ```"""
 
 
-def _build_focused_prompt(rel_path: str, content: str, line_count: int, selected: list[int]) -> str:
+def _build_focused_prompt(
+    rel_path: str, content: str, line_count: int, selected: list[int]
+) -> str:
     header = _build_file_header(rel_path, content, line_count)
-    if len(selected) == len(_MENU_ITEMS):
-        questions = "\n".join(f"{i+1}. {q}" for i, q in enumerate(_MENU_ITEMS))
-        return f"""\
-다음 파일을 코딩을 전혀 모르는 사람도 이해할 수 있도록 한국어로 쉽게 설명해주세요.
-전문 용어는 최대한 피하고, 비유나 예시를 들어 설명해주세요.
-
-{header}
-
-다음 항목으로 설명해주세요:
-
-{questions}
-"""
-    else:
-        questions = "\n".join(f"{i+1}. {_MENU_ITEMS[i]}" for i in selected)
-        return f"""\
-다음 파일에 대해 코딩을 전혀 모르는 중학생도 이해할 수 있도록 한국어로 쉽게 설명해주세요.
-전문 용어는 최대한 피하고, 비유나 예시를 들어 설명해주세요.
-
-{header}
-
-아래 질문에 답해주세요:
-
-{questions}
-"""
-
-
-def _build_prompt(rel_path: str, content: str, line_count: int, question: str | None) -> str:
-    header = _build_file_header(rel_path, content, line_count)
-    specific_q = f"\n특히 이 부분이 궁금합니다: {question}\n" if question else ""
+    section_format = _build_response_format(selected)
     return f"""\
 다음 파일을 코딩을 전혀 모르는 사람도 이해할 수 있도록 한국어로 쉽게 설명해주세요.
 전문 용어는 최대한 피하고, 비유나 예시를 들어 설명해주세요.
-{specific_q}
+불필요한 인사말이나 서론 없이 바로 본문부터 시작하세요.
+각 섹션 제목은 아래 형식을 정확히 유지하고, 섹션마다 1~3개의 짧은 문단 또는 bullet 목록만 사용하세요.
+과한 마크다운 장식은 쓰지 말고, 코드/함수/파일명만 `backtick`으로 감싸세요.
+
 {header}
 
-다음 항목으로 설명해주세요:
+반드시 아래 형식으로 답해주세요:
 
-1. 이 파일이 하는 일은 무엇인가요? (한 줄로 요약)
-2. 주요 기능을 쉬운 말로 설명해주세요. (코드를 모르는 사람 기준)
-3. 다른 파일과 어떻게 연결되나요?
-4. AI가 이 파일을 수정할 때 주의해야 할 점이 있나요?
+{section_format}
 """
 
 
-def _call_openai_compatible(api_key: str, base_url: str, model: str, prompt: str) -> bool:
+def _build_prompt(
+    rel_path: str, content: str, line_count: int, question: Optional[str]
+) -> str:
+    header = _build_file_header(rel_path, content, line_count)
+    specific_q = f"\n특히 이 부분이 궁금합니다: {question}\n" if question else ""
+    section_format = _build_response_format(list(range(len(_MENU_ITEMS))), question)
+    return f"""\
+다음 파일을 코딩을 전혀 모르는 사람도 이해할 수 있도록 한국어로 쉽게 설명해주세요.
+전문 용어는 최대한 피하고, 비유나 예시를 들어 설명해주세요.
+불필요한 인사말이나 서론 없이 바로 본문부터 시작하세요.
+각 섹션 제목은 아래 형식을 정확히 유지하고, 섹션마다 1~3개의 짧은 문단 또는 bullet 목록만 사용하세요.
+과한 마크다운 장식은 쓰지 말고, 코드/함수/파일명만 `backtick`으로 감싸세요.
+{specific_q}
+{header}
+
+반드시 아래 형식으로 답해주세요:
+
+{section_format}
+"""
+
+
+def _call_openai_compatible(
+    api_key: str, base_url: str, model: str, prompt: str
+) -> bool:
     """OpenAI 호환 API 공통 호출 (OpenAI / GLM / Kimi)"""
     data = {
         "model": model,
@@ -108,46 +188,61 @@ def _call_openai_compatible(api_key: str, base_url: str, model: str, prompt: str
     with urllib.request.urlopen(req, timeout=60) as response:
         result = json.loads(response.read())
         text = result["choices"][0]["message"]["content"]
-        print(text)
+        print_ai_response(text)
     return True
 
 
-def _try_anthropic(prompt: str) -> bool:
+def _try_anthropic(prompt: str, attempted: list[str]) -> bool:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return False
+    model = "claude-haiku-4-5"
     try:
         import anthropic
     except ImportError:
         return False
     try:
         client = anthropic.Anthropic(api_key=api_key)
+        attempted.append(f"Anthropic ({model})")
+        print_provider_status("Anthropic", model)
         print("AI가 파일을 분석하고 있습니다...\n")
+        rich_output = should_use_rich()
+        chunks = []
         with client.messages.stream(
-            model="claude-haiku-4-5",
+            model=model,
             max_tokens=2048,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         ) as stream:
             for text in stream.text_stream:
-                print(text, end="", flush=True)
-        print("\n")
+                if rich_output:
+                    chunks.append(text)
+                else:
+                    print(text, end="", flush=True)
+        if rich_output:
+            print_ai_response("".join(chunks), use_rich=True)
+            print()
+        else:
+            print("\n")
         return True
     except Exception as e:
         print(f"Anthropic API 호출 실패: {e}\n")
         return False
 
 
-def _try_openai(prompt: str) -> bool:
+def _try_openai(prompt: str, attempted: list[str]) -> bool:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return False
+    model = "gpt-4o-mini"
     try:
+        attempted.append(f"OpenAI ({model})")
+        print_provider_status("OpenAI", model)
         print("AI가 파일을 분석하고 있습니다...\n")
         _call_openai_compatible(
             api_key=api_key,
             base_url="https://api.openai.com/v1",
-            model="gpt-4o-mini",
+            model=model,
             prompt=prompt,
         )
         print()
@@ -157,12 +252,13 @@ def _try_openai(prompt: str) -> bool:
         return False
 
 
-def _try_gemini(prompt: str) -> bool:
+def _try_gemini(prompt: str, attempted: list[str]) -> bool:
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return False
+    model = (os.environ.get("GEMINI_MODEL") or "").strip() or DEFAULT_GEMINI_MODEL
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         data = {
             "contents": [{"parts": [{"text": prompt}]}],
             "systemInstruction": {"parts": [{"text": _SYSTEM_PROMPT}]},
@@ -173,28 +269,33 @@ def _try_gemini(prompt: str) -> bool:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
+        attempted.append(f"Gemini ({model})")
+        print_provider_status("Gemini", model)
         print("AI가 파일을 분석하고 있습니다...\n")
         with urllib.request.urlopen(req, timeout=60) as response:
             result = json.loads(response.read())
             text = result["candidates"][0]["content"]["parts"][0]["text"]
-            print(text)
+            print_ai_response(text)
         print()
         return True
     except Exception as e:
-        print(f"Gemini API 호출 실패: {e}\n")
+        print(_format_gemini_error(e, model) + "\n")
         return False
 
 
-def _try_glm(prompt: str) -> bool:
+def _try_glm(prompt: str, attempted: list[str]) -> bool:
     api_key = os.environ.get("GLM_API_KEY")
     if not api_key:
         return False
+    model = "glm-4-flash"
     try:
+        attempted.append(f"GLM ({model})")
+        print_provider_status("GLM", model)
         print("AI가 파일을 분석하고 있습니다...\n")
         _call_openai_compatible(
             api_key=api_key,
             base_url="https://open.bigmodel.cn/api/paas/v4",
-            model="glm-4-flash",
+            model=model,
             prompt=prompt,
         )
         print()
@@ -204,16 +305,19 @@ def _try_glm(prompt: str) -> bool:
         return False
 
 
-def _try_kimi(prompt: str) -> bool:
+def _try_kimi(prompt: str, attempted: list[str]) -> bool:
     api_key = os.environ.get("MOONSHOT_API_KEY")
     if not api_key:
         return False
+    model = "moonshot-v1-8k"
     try:
+        attempted.append(f"Kimi ({model})")
+        print_provider_status("Kimi", model)
         print("AI가 파일을 분석하고 있습니다...\n")
         _call_openai_compatible(
             api_key=api_key,
             base_url="https://api.moonshot.cn/v1",
-            model="moonshot-v1-8k",
+            model=model,
             prompt=prompt,
         )
         print()
@@ -281,14 +385,16 @@ def run_ask(args):
 
     # AI API 직접 호출 시도 (설정된 키 순서대로)
     if not args.write:
+        attempted = []
         if (
-            _try_anthropic(prompt)
-            or _try_openai(prompt)
-            or _try_gemini(prompt)
-            or _try_glm(prompt)
-            or _try_kimi(prompt)
+            _try_anthropic(prompt, attempted)
+            or _try_openai(prompt, attempted)
+            or _try_gemini(prompt, attempted)
+            or _try_glm(prompt, attempted)
+            or _try_kimi(prompt, attempted)
         ):
             return
+        print_attempted_providers(attempted)
         if used_menu:
             print("잠시 후 다시 시도하거나, 프롬프트를 저장하려면:")
             print(f"  vibeguard ask {target_input} --write")

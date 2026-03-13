@@ -82,6 +82,10 @@ vibeguard protect --remove main.py
 # --- Ask AI to explain a file ---
 vibeguard ask login.py
 vibeguard ask login.py --write
+GEMINI_MODEL=gemini-2.5-flash-lite vibeguard ask login.py
+
+# --- API config ---
+vibeguard config
 
 # --- AI coding workflow ---
 vibeguard doctor

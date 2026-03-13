@@ -160,6 +160,28 @@ vibeguard protect --remove main.py
 
 ---
 
+## `vibeguard config`
+
+Sets API keys and Gemini model preferences.
+
+```bash
+vibeguard config
+```
+
+What it does:
+
+- Guides you through saving API keys to your shell profile or current session
+- If Gemini is selected, shows available Gemini model IDs
+- Saves `GEMINI_MODEL` when you choose a Gemini model
+
+Notes:
+
+- When a Gemini API key is available, VibeGuard tries to fetch the current official model list from Google AI Studio
+- If the live model list cannot be fetched, VibeGuard falls back to a built-in recommended Gemini model list
+- Press Enter or choose `0` to keep the current Gemini model setting unchanged
+
+---
+
 ## `vibeguard ask`
 
 Generates a plain-language explanation prompt for a file.
@@ -168,6 +190,7 @@ Generates a plain-language explanation prompt for a file.
 vibeguard ask login.py
 vibeguard ask login.py "what does the validate function do?"
 vibeguard ask login.py --write
+GEMINI_MODEL=gemini-2.5-flash-lite vibeguard ask login.py
 ```
 
 What it does:
@@ -183,6 +206,8 @@ Notes:
 
 - Files over 300 lines are truncated to the first 300 lines
 - The prompt includes the filename, line count, and file content
+- If Gemini is the provider that runs, it uses `gemini-3-flash-preview` by default
+- You can override the Gemini model for one command by setting `GEMINI_MODEL`
 
 ---
 

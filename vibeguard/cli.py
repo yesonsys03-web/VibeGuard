@@ -16,6 +16,14 @@ from vibeguard.commands.config_cmd import run_config
 
 _EPILOG = """
 ─────────────────────────────────────────────────
+ 설치 방법
+─────────────────────────────────────────────────
+ [uv 사용 (권장)]
+   uv tool install vibeguard
+
+ [pip 사용]
+   pip install vibeguard
+─────────────────────────────────────────────────
  vibeguard 명령어가 실행되지 않을 때 (PATH 설정)
 ─────────────────────────────────────────────────
  [Mac / Linux]
@@ -38,12 +46,19 @@ _EPILOG = """
 ─────────────────────────────────────────────────
  업데이트 후 변경사항이 반영되지 않을 때 (재설치)
 ─────────────────────────────────────────────────
- [Mac / Linux]
-   uv tool uninstall vibeguard && uv tool install . --no-cache
+ [uv 사용]
+   Mac / Linux:
+     uv tool uninstall vibeguard && uv tool install . --no-cache
+   Windows:
+     uv tool uninstall vibeguard
+     uv tool install . --no-cache
 
- [Windows]
-   uv tool uninstall vibeguard
-   uv tool install . --no-cache
+ [pip 사용]
+   Mac / Linux:
+     pip uninstall vibeguard -y && pip install . --no-cache-dir
+   Windows:
+     pip uninstall vibeguard -y
+     pip install . --no-cache-dir
 ─────────────────────────────────────────────────
 """
 

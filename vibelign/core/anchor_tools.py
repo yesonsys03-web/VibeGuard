@@ -2,6 +2,10 @@ from pathlib import Path
 import re
 from vibelign.core.project_scan import iter_source_files, safe_read_text
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 COMMENT_PREFIX = {
     ".py": "#",
     ".js": "//",

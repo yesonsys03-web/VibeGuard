@@ -1,4 +1,5 @@
 import argparse
+import sys
 from vibelign.commands.doctor_cmd import run_doctor
 from vibelign.commands.anchor_cmd import run_anchor
 from vibelign.commands.patch_cmd import run_patch
@@ -14,6 +15,18 @@ from vibelign.commands.ask_cmd import run_ask
 from vibelign.commands.history_cmd import run_history
 from vibelign.commands.config_cmd import run_config
 from vibelign.commands.vib_start_cmd import run_vib_start
+from vibelign.terminal_render import print_cli_help
+
+
+class RichArgumentParser(argparse.ArgumentParser):
+    def _print_message(self, message, file=None):
+        if not message:
+            return
+        if file not in (None, sys.stdout):
+            file.write(message)
+            return
+        print_cli_help(str(message))
+
 
 _EPILOG = """
 ─────────────────────────────────────────────────
@@ -65,13 +78,15 @@ _EPILOG = """
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(
+    parser = RichArgumentParser(
         prog="vibelign",
         description="바이브코더를 위한 AI 코딩 안전 시스템",
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(
+        dest="command", required=True, parser_class=RichArgumentParser
+    )
 
     p = sub.add_parser("start", help="프로젝트 시작 설정 (AI 도구 연동 + 상태 확인)")
     p.set_defaults(func=run_vib_start)

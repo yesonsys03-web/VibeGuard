@@ -5,6 +5,10 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 _DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"
 _GEMINI_MODEL_FALLBACKS = [
     "gemini-2.5-flash",

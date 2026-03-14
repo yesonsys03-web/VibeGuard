@@ -9,6 +9,10 @@ from vibelign.core.meta_paths import MetaPaths
 from vibelign.terminal_render import print_ai_response, should_use_rich
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def _status_line(status: str) -> str:
     if status in {"Safe", "Good"}:
         return "프로젝트 상태가 좋아요. 바로 AI 코딩을 시작해도 됩니다."

@@ -10,6 +10,10 @@ from vibelign.core.patch_suggester import suggest_patch
 from vibelign.core.project_scan import safe_read_text
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def _render_preview(target_path: Path, target_anchor: str) -> str:
     text = safe_read_text(target_path)
     if not text:

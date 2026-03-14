@@ -11,7 +11,11 @@ from vibelign.terminal_render import (
     print_attempted_providers,
     print_provider_status,
     should_use_rich,
+
 )
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 MAX_LINES = 300  # 너무 긴 파일은 앞부분만 사용
 DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"

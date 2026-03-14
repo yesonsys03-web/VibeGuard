@@ -1,6 +1,10 @@
 from pathlib import Path
 from vibelign.core.anchor_tools import preview_anchor_targets, insert_module_anchors
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_anchor(args):
     root = Path.cwd()
     allowed_exts = {ext.strip().lower() for ext in args.only_ext.split(",") if ext.strip()} if args.only_ext.strip() else None

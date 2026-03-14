@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional
 import time
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 SOURCE_EXTS = {
     ".py",
     ".js",

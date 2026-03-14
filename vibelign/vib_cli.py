@@ -1,6 +1,7 @@
 # === ANCHOR: VIB_CLI_START ===
 import argparse
 import importlib
+import sys
 
 from .commands.vib_anchor_cmd import run_vib_anchor
 from .commands.vib_checkpoint_cmd import run_vib_checkpoint
@@ -16,20 +17,35 @@ from vibelign.commands.export_cmd import run_export
 from vibelign.commands.init_cmd import run_init
 from vibelign.commands.protect_cmd import run_protect
 from vibelign.commands.watch_cmd import run_watch_cmd
+from vibelign.terminal_render import print_cli_help
+
+
+class RichArgumentParser(argparse.ArgumentParser):
+    def _print_message(self, message, file=None):
+        if not message:
+            return
+        if file not in (None, sys.stdout):
+            file.write(message)
+            return
+        print_cli_help(str(message))
 
 
 def build_parser():
     run_vib_guard = importlib.import_module(
         "vibelign.commands.vib_guard_cmd"
     ).run_vib_guard
-    parser = argparse.ArgumentParser(
+    parser = RichArgumentParser(
         prog="vib",
         description="VibeLign CLI (VibeLign와 호환되는 새 진입점)",
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(
+        dest="command", required=True, parser_class=RichArgumentParser
+    )
 
     p = sub.add_parser("init", help="VibeLign 업데이트 / 재설치 (pip·uv 자동 감지)")
-    p.add_argument("--force", action="store_true", help="이미 최신 버전이어도 강제로 재설치")
+    p.add_argument(
+        "--force", action="store_true", help="이미 최신 버전이어도 강제로 재설치"
+    )
     p.set_defaults(func=run_init)
 
     p = sub.add_parser("start", help="처음 쓰는 사람용 시작 명령")
@@ -88,7 +104,9 @@ def build_parser():
     p.set_defaults(func=run_vib_patch)
 
     p = sub.add_parser("explain", help="최근 변경을 쉬운 말로 설명 (파일 지정 가능)")
-    p.add_argument("file", nargs="?", default=None, help="특정 파일만 설명 (예: main.py)")
+    p.add_argument(
+        "file", nargs="?", default=None, help="특정 파일만 설명 (예: main.py)"
+    )
     p.add_argument("--json", action="store_true")
     p.add_argument("--ai", action="store_true")
     p.add_argument("--since-minutes", type=int, default=120)

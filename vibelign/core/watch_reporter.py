@@ -2,6 +2,10 @@ from pathlib import Path
 from datetime import datetime
 import json
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def emit(event, json_mode=False, log_path: Path | None = None):
     if json_mode:
         line = json.dumps(event, ensure_ascii=False)

@@ -4,6 +4,10 @@ from pathlib import Path
 from vibelign.core.local_checkpoints import create_checkpoint
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_checkpoint(args):
     root = Path.cwd()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")

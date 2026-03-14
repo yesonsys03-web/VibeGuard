@@ -10,6 +10,10 @@ from vibelign.core.protected_files import get_protected, is_protected
 from vibelign.core.risk_analyzer import analyze_project
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def _guard_status(report) -> str:
     if report.blocked:
         return "fail"

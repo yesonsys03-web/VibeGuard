@@ -4,8 +4,12 @@ from vibelign.core.local_checkpoints import (
     has_changes_since_checkpoint,
     list_checkpoints,
     restore_checkpoint,
+
 )
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 def run_undo(args):
     root = Path.cwd()

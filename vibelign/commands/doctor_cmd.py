@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 from vibelign.core.risk_analyzer import analyze_project
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_doctor(args):
     report = analyze_project(Path.cwd(), strict=args.strict)
     if args.json:

@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 from vibelign.core.patch_suggester import suggest_patch
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 PATCH_TEMPLATE = '''AI_DEV_SYSTEM_SINGLE_FILE.md 규칙을 따르세요.
 
 작업 내용:

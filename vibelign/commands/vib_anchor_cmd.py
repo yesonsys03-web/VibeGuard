@@ -11,9 +11,13 @@ from vibelign.core.anchor_tools import (
     preview_anchor_targets,
     suggest_anchor_names,
     validate_anchor_file,
+
 )
 from vibelign.core.meta_paths import MetaPaths
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 def _allowed_exts(value: str) -> Optional[Set[str]]:
     if not value.strip():

@@ -7,6 +7,10 @@ from vibelign.core.local_checkpoints import create_checkpoint
 from vibelign.core.meta_paths import MetaPaths
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_vib_checkpoint(args: Any) -> None:
     root = Path.cwd()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")

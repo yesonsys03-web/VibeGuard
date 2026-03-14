@@ -7,9 +7,13 @@ from vibelign.core.doctor_v2 import (
     build_doctor_envelope,
     render_doctor_json,
     render_doctor_markdown,
+
 )
 from vibelign.core.meta_paths import MetaPaths
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 def run_vib_doctor(args: Any) -> None:
     root = Path.cwd()

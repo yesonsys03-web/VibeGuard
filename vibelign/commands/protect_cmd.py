@@ -2,6 +2,10 @@ from pathlib import Path
 from vibelign.core.protected_files import get_protected, save_protected
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_protect(args):
     root = Path.cwd()
     protected = get_protected(root)

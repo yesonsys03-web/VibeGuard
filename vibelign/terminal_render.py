@@ -2,6 +2,7 @@ import importlib
 import os
 import re
 import sys
+import builtins
 from typing import Any, Optional, cast
 
 
@@ -342,3 +343,115 @@ def print_ai_response(
         return
 
     rich_console.print(rich_mod["Group"](*renderables))
+
+
+def cli_print(
+    *args: object,
+    sep: str = " ",
+    end: str = "\n",
+    file: Optional[Any] = None,
+    flush: bool = False,
+) -> None:
+    plain_print = builtins.print
+    text = sep.join(str(arg) for arg in args)
+
+    if file not in (None, sys.stdout):
+        plain_print(*args, sep=sep, end=end, file=file, flush=flush)
+        return
+
+    if end != "\n" or flush:
+        plain_print(*args, sep=sep, end=end, file=file, flush=flush)
+        return
+
+    if should_use_rich():
+        if "\n" in text:
+            print_ai_response(text, use_rich=True)
+            return
+        rich_mod = _load_rich()
+        if rich_mod is not None:
+            rich_mod["Console"]().print(text, markup=False)
+            return
+
+    plain_print(text)
+
+
+def print_cli_help(message: str, console: Optional[Any] = None) -> None:
+    plain_print = builtins.print
+    if not message:
+        return
+
+    if not should_use_rich():
+        plain_print(message, end="")
+        return
+
+    rich_mod = _load_rich()
+    if rich_mod is None:
+        plain_print(message, end="")
+        return
+
+    rich_console = _get_console(rich_mod, console)
+
+    lines = message.rstrip("\n").split("\n")
+    section_titles = {
+        "usage:": "Usage",
+        "positional arguments:": "Positional Arguments",
+        "optional arguments:": "Options",
+        "options:": "Options",
+    }
+
+    intro: list[str] = []
+    sections: list[tuple[str, list[str]]] = []
+    current_title: Optional[str] = None
+    current_lines: list[str] = []
+
+    def flush() -> None:
+        nonlocal current_title, current_lines
+        if current_title is not None:
+            sections.append((current_title, current_lines[:]))
+        current_title = None
+        current_lines = []
+
+    for line in lines:
+        normalized = line.strip().lower()
+        if normalized in section_titles:
+            flush()
+            current_title = section_titles[normalized]
+            current_lines = []
+            continue
+
+        if current_title is None:
+            intro.append(line)
+        else:
+            current_lines.append(line)
+
+    flush()
+
+    if intro:
+        rich_console.print(
+            rich_mod["Panel"](
+                "\n".join(intro),
+                title="VibeLign CLI",
+                border_style="cyan",
+                padding=(0, 1),
+            )
+        )
+
+    for title, body_lines in sections:
+        border = (
+            "green"
+            if title == "Usage"
+            else "magenta"
+            if title == "Positional Arguments"
+            else "yellow"
+        )
+        body = "\n".join(body_lines).rstrip()
+        if not body:
+            body = "(no details)"
+        rich_console.print(
+            rich_mod["Panel"](
+                body,
+                title=title,
+                border_style=border,
+                padding=(0, 1),
+            )
+        )

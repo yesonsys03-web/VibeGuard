@@ -5,7 +5,11 @@ from vibelign.core.change_explainer import (
     explain_file_from_mtime,
     explain_from_git,
     explain_from_mtime,
+
 )
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 def _render_markdown(report):
     lines = ["# VibeLign 변경 설명 리포트", "", f"소스: {report.source}", f"위험 수준: {report.risk_level}", "", "## 요약", report.summary, "", "## 변경된 사항"]

@@ -1,6 +1,10 @@
 from pathlib import Path
 from vibelign.core.ai_dev_system import AI_DEV_SYSTEM_CONTENT
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 AGENTS_MD_CONTENT = """\
 # AGENTS.md
 

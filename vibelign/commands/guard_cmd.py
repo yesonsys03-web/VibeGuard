@@ -6,6 +6,10 @@ from vibelign.core.guard_report import combine_guard
 from vibelign.core.protected_files import get_protected, is_protected
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def _render_markdown(report, protected_violations=None):
     lines = []
     # 보호 파일 위반이 있으면 최상단에 경고 표시

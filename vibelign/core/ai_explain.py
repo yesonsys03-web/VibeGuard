@@ -8,6 +8,10 @@ from vibelign.commands.ask_cmd import _SYSTEM_PROMPT, _format_gemini_error
 from vibelign.terminal_render import print_attempted_providers, print_provider_status
 
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def has_ai_provider() -> bool:
     return any(
         os.environ.get(key)

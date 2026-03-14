@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 from typing import Optional
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 # Claude Code 훅 설정 경로 (프로젝트 레벨)
 _CLAUDE_SETTINGS = ".claude/settings.json"
 

@@ -9,10 +9,14 @@ from vibelign.core.change_explainer import (
     explain_file_from_mtime,
     explain_from_git,
     explain_from_mtime,
+
 )
 from vibelign.core.meta_paths import MetaPaths
 from vibelign.terminal_render import print_ai_response
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
 
 def _resolve_file_path(root: Path, file_arg: str) -> tuple:
     """파일 인자를 절대 경로로 해석. (rel_path, abs_path, error_msg) 반환."""

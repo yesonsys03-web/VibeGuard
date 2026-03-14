@@ -1,5 +1,9 @@
 from pathlib import Path
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 def run_watch_cmd(args):
     from vibelign.core.watch_engine import run_watch
     try:

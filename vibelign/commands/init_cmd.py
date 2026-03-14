@@ -4,6 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+from vibelign.terminal_render import cli_print
+print = cli_print
+
 _MIN_PYTHON = (3, 9)
 
 _ERR = {

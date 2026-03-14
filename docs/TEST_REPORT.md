@@ -1,11 +1,11 @@
-# VibeGuard Final Release Test Notes
+# VibeLign Final Release Test Notes
 
 This final release includes fixes for the pre-release blockers:
 
 ## Fixed
 
 ### 1. `watchdog` import no longer breaks the whole CLI
-Only `vibeguard watch` requires `watchdog`.
+Only `vibelign watch` requires `watchdog`.
 All other commands run without it.
 
 ### 2. Patch suggestion deprioritizes bad candidates

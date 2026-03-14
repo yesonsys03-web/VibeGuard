@@ -1,10 +1,10 @@
 import unittest
 import importlib
 
-from vibeguard.core.codespeak import build_codespeak
+from vibelign.core.codespeak import build_codespeak
 
 
-_ai_codespeak = importlib.import_module("vibeguard.core.ai_codespeak")
+_ai_codespeak = importlib.import_module("vibelign.core.ai_codespeak")
 _parse_codespeak_text = _ai_codespeak._parse_codespeak_text
 build_codespeak_ai_prompt = _ai_codespeak.build_codespeak_ai_prompt
 

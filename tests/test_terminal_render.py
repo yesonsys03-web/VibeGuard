@@ -4,7 +4,7 @@ import importlib.util
 import unittest
 from contextlib import redirect_stdout
 
-from vibeguard.terminal_render import normalize_ai_output, print_ai_response
+from vibelign.terminal_render import normalize_ai_output, print_ai_response
 
 
 class TerminalRenderTests(unittest.TestCase):

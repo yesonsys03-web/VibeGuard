@@ -3,7 +3,7 @@ import importlib
 
 
 build_explain_ai_prompt = importlib.import_module(
-    "vibeguard.core.ai_explain"
+    "vibelign.core.ai_explain"
 ).build_explain_ai_prompt
 
 

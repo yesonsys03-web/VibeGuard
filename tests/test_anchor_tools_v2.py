@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from vibeguard.core.anchor_tools import (
+from vibelign.core.anchor_tools import (
     build_symbol_anchor_name,
     collect_anchor_index,
     insert_js_symbol_anchors,
@@ -42,7 +42,7 @@ class AnchorToolsV2Test(unittest.TestCase):
             self.assertIn("ANCHOR:", "\n".join(lines[1:]))
 
     def test_build_anchor_name_normalizes_dots(self):
-        from vibeguard.core.anchor_tools import build_anchor_name
+        from vibelign.core.anchor_tools import build_anchor_name
 
         self.assertEqual(build_anchor_name(Path("foo.test.py")), "FOO_TEST")
 
@@ -77,7 +77,7 @@ class AnchorToolsV2Test(unittest.TestCase):
                 "# === ANCHOR: SAMPLE_START ===\n# === ANCHOR: SAMPLE_LOGIN_START ===\n# === ANCHOR: SAMPLE_LOGIN_END ===\n# === ANCHOR: SAMPLE_END ===\n",
                 encoding="utf-8",
             )
-            from vibeguard.core.anchor_tools import extract_anchors
+            from vibelign.core.anchor_tools import extract_anchors
 
             anchors = extract_anchors(path)
             self.assertIn("SAMPLE", anchors)

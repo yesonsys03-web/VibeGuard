@@ -3,7 +3,7 @@ import importlib
 
 
 _render_markdown = importlib.import_module(
-    "vibeguard.commands.vib_guard_cmd"
+    "vibelign.commands.vib_guard_cmd"
 )._render_markdown
 
 

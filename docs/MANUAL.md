@@ -1,12 +1,12 @@
-# VibeGuard Manual
+# VibeLign Manual
 
-This manual explains how to use VibeGuard before, during, and after AI-assisted edits.
+This manual explains how to use VibeLign before, during, and after AI-assisted edits.
 
 ---
 
-## 1. What VibeGuard is for
+## 1. What VibeLign is for
 
-VibeGuard is a safety layer for AI coding workflows.
+VibeLign is a safety layer for AI coding workflows.
 
 It does **not** replace your AI tool.
 It helps you keep the project stable while using tools like:
@@ -29,7 +29,7 @@ The core idea is simple:
 ### New project
 
 ```bash
-vibeguard init
+vibelign init
 ```
 
 This sets up everything in one command.
@@ -39,19 +39,19 @@ This sets up everything in one command.
 Use this loop whenever you ask AI to change code:
 
 ```bash
-vibeguard checkpoint "before your task"
-vibeguard doctor --strict
-vibeguard anchor
-vibeguard patch "your request here"
+vibelign checkpoint "before your task"
+vibelign doctor --strict
+vibelign anchor
+vibelign patch "your request here"
 # ask AI using the generated patch request
-vibeguard explain --write-report
-vibeguard guard --strict --write-report
+vibelign explain --write-report
+vibelign guard --strict --write-report
 
 # if all good:
-vibeguard checkpoint "done: your task"
+vibelign checkpoint "done: your task"
 
 # if something broke:
-vibeguard undo
+vibelign undo
 ```
 
 ---
@@ -60,22 +60,22 @@ vibeguard undo
 
 ---
 
-## `vibeguard init`
+## `vibelign init`
 
 One-command project setup for beginners.
 
 ```bash
-vibeguard init
-vibeguard init --tool claude
-vibeguard init --tool cursor
-vibeguard init --tool opencode
-vibeguard init --tool antigravity
+vibelign init
+vibelign init --tool claude
+vibelign init --tool cursor
+vibelign init --tool opencode
+vibelign init --tool antigravity
 ```
 
 What it does:
 
 1. Exports `AI_DEV_SYSTEM_SINGLE_FILE.md` and `AGENTS.md` to the project root
-2. Exports tool-specific helper files (`vibeguard_exports/<tool>/`)
+2. Exports tool-specific helper files (`vibelign_exports/<tool>/`)
 3. Creates a `.gitignore` if one does not exist
 4. Runs `git init` if the project is not a Git repo yet
 5. Creates the first checkpoint automatically
@@ -84,14 +84,14 @@ After `init`, your project is fully ready for AI-assisted development.
 
 ---
 
-## `vibeguard checkpoint`
+## `vibelign checkpoint`
 
 Saves the current project state as a restore point (uses Git under the hood).
 
 ```bash
-vibeguard checkpoint "before login feature"
-vibeguard checkpoint "added signup validation"
-vibeguard checkpoint
+vibelign checkpoint "before login feature"
+vibelign checkpoint "added signup validation"
+vibelign checkpoint
 ```
 
 - If no message is given, a timestamp is used automatically.
@@ -102,13 +102,13 @@ Think of it as a **game save point** for your code.
 
 ---
 
-## `vibeguard undo`
+## `vibelign undo`
 
 Restores the project to the last checkpoint.
 
 ```bash
-vibeguard undo
-vibeguard undo --list
+vibelign undo
+vibelign undo --list
 ```
 
 Behavior:
@@ -121,12 +121,12 @@ Use this when AI broke something and you want to go back.
 
 ---
 
-## `vibeguard history`
+## `vibelign history`
 
 Shows all saved checkpoints.
 
 ```bash
-vibeguard history
+vibelign history
 ```
 
 Displays:
@@ -143,29 +143,29 @@ Also shows:
 
 ---
 
-## `vibeguard protect`
+## `vibelign protect`
 
 Locks important files so AI cannot accidentally modify them.
 
 ```bash
-vibeguard protect main.py
-vibeguard protect src/config.py
-vibeguard protect --list
-vibeguard protect --remove main.py
+vibelign protect main.py
+vibelign protect src/config.py
+vibelign protect --list
+vibelign protect --remove main.py
 ```
 
-- Protected files are tracked in `.vibeguard_protected`
+- Protected files are tracked in `.vibelign_protected`
 - `guard` and `watch` will warn you if a protected file was changed
 - Use this for files that must never be touched by AI
 
 ---
 
-## `vibeguard config`
+## `vibelign config`
 
 Sets API keys and Gemini model preferences.
 
 ```bash
-vibeguard config
+vibelign config
 ```
 
 What it does:
@@ -176,28 +176,28 @@ What it does:
 
 Notes:
 
-- When a Gemini API key is available, VibeGuard tries to fetch the current official model list from Google AI Studio
-- If the live model list cannot be fetched, VibeGuard falls back to a built-in recommended Gemini model list
+- When a Gemini API key is available, VibeLign tries to fetch the current official model list from Google AI Studio
+- If the live model list cannot be fetched, VibeLign falls back to a built-in recommended Gemini model list
 - Press Enter or choose `0` to keep the current Gemini model setting unchanged
 
 ---
 
-## `vibeguard ask`
+## `vibelign ask`
 
 Generates a plain-language explanation prompt for a file.
 
 ```bash
-vibeguard ask login.py
-vibeguard ask login.py "what does the validate function do?"
-vibeguard ask login.py --write
-GEMINI_MODEL=gemini-2.5-flash-lite vibeguard ask login.py
+vibelign ask login.py
+vibelign ask login.py "what does the validate function do?"
+vibelign ask login.py --write
+GEMINI_MODEL=gemini-2.5-flash-lite vibelign ask login.py
 ```
 
 What it does:
 
 - Reads the file
 - Builds a prompt asking an AI to explain it in plain Korean
-- With `--write`: saves the prompt to `VIBEGUARD_ASK.md`
+- With `--write`: saves the prompt to `VIBELIGN_ASK.md`
 - Without `--write`: prints the prompt so you can copy it
 
 Use this when you do not understand a file and want to ask AI to explain it before editing.
@@ -211,14 +211,14 @@ Notes:
 
 ---
 
-## `vibeguard doctor`
+## `vibelign doctor`
 
 Checks structural issues.
 
 ```bash
-vibeguard doctor
-vibeguard doctor --strict
-vibeguard doctor --json
+vibelign doctor
+vibelign doctor --strict
+vibelign doctor --json
 ```
 
 Looks for:
@@ -234,14 +234,14 @@ Use `--strict` when you want earlier warnings.
 
 ---
 
-## `vibeguard anchor`
+## `vibelign anchor`
 
 Adds module-level anchors to source files that do not have them yet.
 
 ```bash
-vibeguard anchor
-vibeguard anchor --dry-run
-vibeguard anchor --only-ext .py,.js
+vibelign anchor
+vibelign anchor --dry-run
+vibelign anchor --only-ext .py,.js
 ```
 
 Important behavior:
@@ -262,13 +262,13 @@ AI can be instructed to edit only inside an anchor instead of rewriting the full
 
 ---
 
-## `vibeguard patch`
+## `vibelign patch`
 
 Builds a safer AI prompt.
 
 ```bash
-vibeguard patch "add progress indicator to backup worker"
-vibeguard patch "add progress indicator to backup worker" --json
+vibelign patch "add progress indicator to backup worker"
+vibelign patch "add progress indicator to backup worker" --json
 ```
 
 Outputs:
@@ -281,7 +281,7 @@ Outputs:
 It also writes:
 
 ```text
-VIBEGUARD_PATCH_REQUEST.md
+VIBELIGN_PATCH_REQUEST.md
 ```
 
 This file can be pasted directly into your AI coding tool.
@@ -293,15 +293,15 @@ Notes:
 
 ---
 
-## `vibeguard explain`
+## `vibelign explain`
 
 Explains recent changes in human language.
 
 ```bash
-vibeguard explain
-vibeguard explain --write-report
-vibeguard explain --json
-vibeguard explain --since-minutes 30
+vibelign explain
+vibelign explain --write-report
+vibelign explain --json
+vibelign explain --since-minutes 30
 ```
 
 Primary mode:
@@ -322,20 +322,20 @@ Output includes:
 When `--write-report` is used, this is saved:
 
 ```text
-VIBEGUARD_EXPLAIN.md
+VIBELIGN_EXPLAIN.md
 ```
 
 ---
 
-## `vibeguard guard`
+## `vibelign guard`
 
 Combines `doctor` + `explain`.
 
 ```bash
-vibeguard guard
-vibeguard guard --strict
-vibeguard guard --json
-vibeguard guard --write-report
+vibelign guard
+vibelign guard --strict
+vibelign guard --json
+vibelign guard --write-report
 ```
 
 This answers:
@@ -354,26 +354,26 @@ Output includes:
 Saved report:
 
 ```text
-VIBEGUARD_GUARD.md
+VIBELIGN_GUARD.md
 ```
 
 ---
 
-## `vibeguard export`
+## `vibelign export`
 
 Creates helper files for tool-specific workflows.
 
 ```bash
-vibeguard export claude
-vibeguard export opencode
-vibeguard export cursor
-vibeguard export antigravity
+vibelign export claude
+vibelign export opencode
+vibelign export cursor
+vibelign export antigravity
 ```
 
 This creates:
 
 ```text
-vibeguard_exports/<tool>/
+vibelign_exports/<tool>/
 ```
 
 Also creates in the project root:
@@ -390,16 +390,16 @@ Examples:
 
 ---
 
-## `vibeguard watch`
+## `vibelign watch`
 
 Real-time monitor while AI or you edit files.
 
 ```bash
-vibeguard watch
-vibeguard watch --strict
-vibeguard watch --write-log
-vibeguard watch --json
-vibeguard watch --debounce-ms 800
+vibelign watch
+vibelign watch --strict
+vibelign watch --write-log
+vibelign watch --json
+vibelign watch --debounce-ms 800
 ```
 
 Extra dependency required:
@@ -426,13 +426,13 @@ Watch detects:
 Log file if enabled:
 
 ```text
-.vibeguard/watch.log
+.vibelign/watch.log
 ```
 
 State file:
 
 ```text
-.vibeguard/watch_state.json
+.vibelign/watch_state.json
 ```
 
 If `watchdog` is missing, only the `watch` command fails gracefully.
@@ -494,15 +494,15 @@ Fallback mtime mode is intentionally conservative, but calmer than before.
 Use:
 
 ```bash
-vibeguard anchor --dry-run
-vibeguard anchor --only-ext .py
+vibelign anchor --dry-run
+vibelign anchor --only-ext .py
 ```
 
 ### `undo` says there are no checkpoints
-Run `vibeguard checkpoint "initial"` first to create your first save point.
+Run `vibelign checkpoint "initial"` first to create your first save point.
 
 ### `protect` list is empty
-Run `vibeguard protect <filename>` to add files to the protected list.
+Run `vibelign protect <filename>` to add files to the protected list.
 
 ---
 
@@ -511,7 +511,7 @@ Run `vibeguard protect <filename>` to add files to the protected list.
 New project:
 
 ```bash
-vibeguard init
+vibelign init
 ```
 
 That's it. Everything else is set up automatically.
@@ -519,11 +519,11 @@ That's it. Everything else is set up automatically.
 Existing project:
 
 ```bash
-vibeguard doctor
-vibeguard anchor --dry-run
-vibeguard anchor
-vibeguard export opencode
-vibeguard checkpoint "vibeguard added"
+vibelign doctor
+vibelign anchor --dry-run
+vibelign anchor
+vibelign export opencode
+vibelign checkpoint "vibelign added"
 ```
 
 ---
@@ -534,4 +534,4 @@ The safest pattern is:
 
 > checkpoint first, AI second, guard always
 
-That is exactly what VibeGuard is for.
+That is exactly what VibeLign is for.

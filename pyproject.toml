@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vibeguard"
+name = "vibelign"
 version = "1.1.1"
 description = "AI coding safety system for vibecoders"
 readme = "README.md"
@@ -12,8 +12,8 @@ authors = [{name = "yesonsys"}]
 dependencies = ["anthropic>=0.40.0", "rich>=13.9.0"]
 
 [project.scripts]
-vibeguard = "vibeguard.cli:main"
-vib = "vibeguard.vib_cli:main"
+vibelign = "vibelign.cli:main"
+vib = "vibelign.vib_cli:main"
 
 [tool.setuptools.packages.find]
-include = ["vibeguard*"]
+include = ["vibelign*"]

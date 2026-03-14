@@ -1,0 +1,61 @@
+# === ANCHOR: META_PATHS_START ===
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class MetaPaths:
+    root: Path
+
+    @property
+    def vibelign_dir(self) -> Path:
+        return self.root / ".vibelign"
+
+    @property
+    def vibelign_dir(self) -> Path:
+        return self.root / ".vibelign"
+
+    @property
+    def config_path(self) -> Path:
+        return self.vibelign_dir / "config.yaml"
+
+    @property
+    def project_map_path(self) -> Path:
+        return self.vibelign_dir / "project_map.json"
+
+    @property
+    def state_path(self) -> Path:
+        return self.vibelign_dir / "state.json"
+
+    @property
+    def anchor_index_path(self) -> Path:
+        return self.vibelign_dir / "anchor_index.json"
+
+    @property
+    def checkpoints_dir(self) -> Path:
+        return self.vibelign_dir / "checkpoints"
+
+    @property
+    def reports_dir(self) -> Path:
+        return self.vibelign_dir / "reports"
+
+    @property
+    def watch_state_path(self) -> Path:
+        return self.vibelign_dir / "watch_state.json"
+
+    @property
+    def watch_log_path(self) -> Path:
+        return self.vibelign_dir / "watch.log"
+
+    def ensure_vibelign_dirs(self) -> None:
+        self.vibelign_dir.mkdir(parents=True, exist_ok=True)
+        self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+
+    def ensure_vibelign_dir(self) -> None:
+        self.vibelign_dir.mkdir(parents=True, exist_ok=True)
+
+    def report_path(self, command: str, fmt: str) -> Path:
+        suffix = ".json" if fmt == "json" else ".md"
+        return self.reports_dir / f"{command}_latest{suffix}"
+# === ANCHOR: META_PATHS_END ===

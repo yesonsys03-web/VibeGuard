@@ -226,17 +226,17 @@ Therefore:
 
 ---
 
-## 11. Recommended VibeGuard Workflow
+## 11. Recommended Vib Workflow
 
 Use this loop whenever possible:
 
 ```bash
-vibeguard doctor --strict
-vibeguard anchor
-vibeguard patch "your request here"
+vib doctor --strict
+vib anchor
+vib patch "your request here"
 # apply AI edit
-vibeguard explain --write-report
-vibeguard guard --strict --write-report
+vib explain --write-report
+vib guard --strict --write-report
 ```
 
 ### Meaning
@@ -252,27 +252,27 @@ vibeguard guard --strict --write-report
 
 ### For OpenCode
 Also consult:
-- `vibeguard_exports/opencode/RULES.md`
-- `vibeguard_exports/opencode/PROMPT_TEMPLATE.md`
-- `vibeguard_exports/opencode/SETUP.md`
+- `vibelign_exports/opencode/RULES.md`
+- `vibelign_exports/opencode/PROMPT_TEMPLATE.md`
+- `vibelign_exports/opencode/SETUP.md`
 
 ### For Claude Code
 Also consult:
-- `vibeguard_exports/claude/RULES.md`
-- `vibeguard_exports/claude/PROMPT_TEMPLATE.md`
-- `vibeguard_exports/claude/SETUP.md`
+- `vibelign_exports/claude/RULES.md`
+- `vibelign_exports/claude/PROMPT_TEMPLATE.md`
+- `vibelign_exports/claude/SETUP.md`
 
 ### For Cursor
 Also consult:
-- `vibeguard_exports/cursor/RULES.md`
-- `vibeguard_exports/cursor/PROMPT_TEMPLATE.md`
-- `vibeguard_exports/cursor/SETUP.md`
+- `vibelign_exports/cursor/RULES.md`
+- `vibelign_exports/cursor/PROMPT_TEMPLATE.md`
+- `vibelign_exports/cursor/SETUP.md`
 
 ### For Antigravity
 Also consult:
-- `vibeguard_exports/antigravity/TASK_ARTIFACT.md`
-- `vibeguard_exports/antigravity/VERIFICATION_CHECKLIST.md`
-- `vibeguard_exports/antigravity/SETUP.md`
+- `vibelign_exports/antigravity/TASK_ARTIFACT.md`
+- `vibelign_exports/antigravity/VERIFICATION_CHECKLIST.md`
+- `vibelign_exports/antigravity/SETUP.md`
 
 ---
 

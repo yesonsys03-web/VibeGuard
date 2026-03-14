@@ -1,9 +1,9 @@
 Recommended smoke tests before publishing:
-- python -m compileall vibeguard
-- vibeguard doctor
-- vibeguard anchor --dry-run
-- vibeguard patch add progress bar --json
-- vibeguard explain --json
-- vibeguard guard --json
-- vibeguard export claude
-- vibeguard watch  # after installing watchdog
+- python -m compileall vibelign
+- vibelign doctor
+- vibelign anchor --dry-run
+- vibelign patch add progress bar --json
+- vibelign explain --json
+- vibelign guard --json
+- vibelign export claude
+- vibelign watch  # after installing watchdog

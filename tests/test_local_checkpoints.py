@@ -1,0 +1,123 @@
+import tempfile
+import unittest
+import json
+from pathlib import Path
+from typing import cast
+
+from vibelign.core.local_checkpoints import (
+    CheckpointSummary,
+    RetentionPolicy,
+    create_checkpoint,
+    has_changes_since_checkpoint,
+    list_checkpoints,
+    prune_checkpoints,
+    restore_checkpoint,
+)
+
+
+class LocalCheckpointsTest(unittest.TestCase):
+    def test_create_checkpoint_and_list(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "app.py").write_text("print('v1')\n", encoding="utf-8")
+            summary = create_checkpoint(root, "first checkpoint")
+            self.assertIsNotNone(summary)
+            checkpoints = list_checkpoints(root)
+            self.assertEqual(len(checkpoints), 1)
+            self.assertEqual(checkpoints[0].message, "first checkpoint")
+
+    def test_restore_checkpoint_reverts_file_and_removes_new_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "app.py"
+            target.write_text("print('v1')\n", encoding="utf-8")
+            first_raw = create_checkpoint(root, "first checkpoint")
+            self.assertIsNotNone(first_raw)
+            first = cast(CheckpointSummary, first_raw)
+            target.write_text("print('v2')\n", encoding="utf-8")
+            extra = root / "temp.txt"
+            extra.write_text("temp\n", encoding="utf-8")
+            second_raw = create_checkpoint(root, "second checkpoint")
+            self.assertIsNotNone(second_raw)
+            self.assertTrue(restore_checkpoint(root, first.checkpoint_id))
+            self.assertEqual(target.read_text(encoding="utf-8"), "print('v1')\n")
+            self.assertFalse(extra.exists())
+
+    def test_create_checkpoint_skips_when_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "app.py").write_text("print('v1')\n", encoding="utf-8")
+            self.assertIsNotNone(create_checkpoint(root, "first checkpoint"))
+            self.assertIsNone(create_checkpoint(root, "unchanged checkpoint"))
+
+    def test_has_changes_since_checkpoint_detects_workspace_diff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "app.py"
+            target.write_text("print('v1')\n", encoding="utf-8")
+            first_raw = create_checkpoint(root, "first checkpoint")
+            self.assertIsNotNone(first_raw)
+            first = cast(CheckpointSummary, first_raw)
+            self.assertFalse(has_changes_since_checkpoint(root, first.checkpoint_id))
+            target.write_text("print('v2')\n", encoding="utf-8")
+            self.assertTrue(has_changes_since_checkpoint(root, first.checkpoint_id))
+
+    def test_prune_checkpoints_keeps_latest_and_removes_old_extra(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "app.py"
+            for index in range(4):
+                target.write_text(f"print('v{index}')\n", encoding="utf-8")
+                self.assertIsNotNone(create_checkpoint(root, f"cp {index}"))
+            policy = RetentionPolicy(
+                keep_latest=2,
+                keep_daily_days=0,
+                keep_weekly_weeks=0,
+                max_total_size_bytes=10**9,
+                max_age_days=999,
+                min_keep=1,
+            )
+            result = prune_checkpoints(root, policy=policy)
+            self.assertGreaterEqual(result["count"], 2)
+            self.assertLessEqual(len(list_checkpoints(root)), 2)
+
+    def test_prune_checkpoints_removes_old_checkpoint_even_under_count_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkpoints_dir = root / ".vibelign" / "checkpoints"
+            old_dir = checkpoints_dir / "20000101T000000000000Z"
+            files_dir = old_dir / "files"
+            files_dir.mkdir(parents=True)
+            (files_dir / "app.py").write_text("print('old')\n", encoding="utf-8")
+            (old_dir / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "id": "20000101T000000000000Z",
+                        "created_at": "20000101T000000000000Z",
+                        "message": "old checkpoint",
+                        "pinned": False,
+                        "file_count": 1,
+                        "total_size_bytes": 12,
+                        "files": [{"path": "app.py", "sha256": "x", "size": 12}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = prune_checkpoints(
+                root,
+                policy=RetentionPolicy(
+                    keep_latest=30,
+                    keep_daily_days=0,
+                    keep_weekly_weeks=0,
+                    max_total_size_bytes=10**9,
+                    max_age_days=1,
+                    min_keep=0,
+                ),
+            )
+            self.assertEqual(result["count"], 1)
+            self.assertFalse(old_dir.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

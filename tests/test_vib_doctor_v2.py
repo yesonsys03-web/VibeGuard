@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from vibeguard.core.doctor_v2 import build_doctor_envelope
+from vibelign.core.doctor_v2 import build_doctor_envelope
 
 
 class VibDoctorV2Test(unittest.TestCase):

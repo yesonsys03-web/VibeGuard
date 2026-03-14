@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from vibeguard.core.anchor_tools import suggest_anchor_names
+from vibelign.core.anchor_tools import suggest_anchor_names
 
 
 class AnchorSuggestionsTest(unittest.TestCase):

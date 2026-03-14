@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from vibeguard.core.patch_suggester import suggest_patch
+from vibelign.core.patch_suggester import suggest_patch
 
 
 class PatchSuggestedAnchorTest(unittest.TestCase):

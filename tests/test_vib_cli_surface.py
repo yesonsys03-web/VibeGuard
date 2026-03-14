@@ -1,7 +1,7 @@
 import unittest
 from typing import Any, cast
 
-from vibeguard.vib_cli import build_parser
+from vibelign.vib_cli import build_parser
 
 
 class VibCliSurfaceTest(unittest.TestCase):
@@ -15,7 +15,7 @@ class VibCliSurfaceTest(unittest.TestCase):
         )
         commands = set(subparsers_action.choices.keys())
         self.assertTrue(
-            {"protect", "ask", "config", "export", "watch"}.issubset(commands)
+            {"protect", "ask", "config", "export", "watch", "start"}.issubset(commands)
         )
 
 

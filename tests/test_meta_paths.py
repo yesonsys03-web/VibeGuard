@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from vibeguard.core.meta_paths import MetaPaths
+from vibelign.core.meta_paths import MetaPaths
 
 
 class MetaPathsTest(unittest.TestCase):

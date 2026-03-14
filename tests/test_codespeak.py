@@ -1,6 +1,6 @@
 import unittest
 
-from vibeguard.core.codespeak import build_codespeak
+from vibelign.core.codespeak import build_codespeak
 
 
 class CodeSpeakTest(unittest.TestCase):

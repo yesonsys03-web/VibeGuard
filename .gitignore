@@ -17,14 +17,15 @@ build/
 venv/
 env/
 
-# VibeGuard generated output files
-VIBEGUARD_PATCH_REQUEST.md
-VIBEGUARD_EXPLAIN.md
-VIBEGUARD_GUARD.md
-vibeguard_exports/
+# VibeLign generated output files
+VIBELIGN_PATCH_REQUEST.md
+VIBELIGN_EXPLAIN.md
+VIBELIGN_GUARD.md
+vibelign_exports/
 .vibelign/
 
 # IDE
 .vscode/
 .idea/
 .claude/
+.vibelign/checkpoints/

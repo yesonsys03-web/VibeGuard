@@ -1,6 +1,6 @@
 import unittest
 
-from vibeguard.commands.vib_explain_cmd import _render_markdown
+from vibelign.commands.vib_explain_cmd import _render_markdown
 
 
 class VibExplainRenderTest(unittest.TestCase):

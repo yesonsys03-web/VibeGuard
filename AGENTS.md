@@ -16,12 +16,12 @@ This file is automatically read by OpenCode, Claude Code, and other AI coding to
 ## Required Workflow
 
 ```bash
-vibeguard doctor --strict
-vibeguard anchor
-vibeguard patch "<your request>"
+vib doctor --strict
+vib anchor
+vib patch "<your request>"
 # apply the AI edit
-vibeguard explain --write-report
-vibeguard guard --strict --write-report
+vib explain --write-report
+vib guard --strict --write-report
 ```
 
 ## Full Rules

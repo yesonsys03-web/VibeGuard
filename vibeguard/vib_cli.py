@@ -10,6 +10,11 @@ from .commands.vib_history_cmd import run_vib_history
 from .commands.vib_init_cmd import run_vib_init
 from .commands.vib_patch_cmd import run_vib_patch
 from .commands.vib_undo_cmd import run_vib_undo
+from vibeguard.commands.ask_cmd import run_ask
+from vibeguard.commands.config_cmd import run_config
+from vibeguard.commands.export_cmd import run_export
+from vibeguard.commands.protect_cmd import run_protect
+from vibeguard.commands.watch_cmd import run_watch_cmd
 
 
 def build_parser():
@@ -35,6 +40,21 @@ def build_parser():
 
     p = sub.add_parser("history", help="체크포인트 이력 보기")
     p.set_defaults(func=run_vib_history)
+
+    p = sub.add_parser("protect", help="중요 파일을 AI 수정으로부터 보호")
+    p.add_argument("file", nargs="?", help="보호할 파일명")
+    p.add_argument("--remove", action="store_true", help="보호 해제")
+    p.add_argument("--list", action="store_true", help="보호 목록 보기")
+    p.set_defaults(func=run_protect)
+
+    p = sub.add_parser("ask", help="파일 내용을 쉬운 말로 설명")
+    p.add_argument("file", help="설명이 필요한 파일명")
+    p.add_argument("question", nargs="*", help="특정 질문")
+    p.add_argument("--write", action="store_true", help="프롬프트를 파일로 저장")
+    p.set_defaults(func=run_ask)
+
+    p = sub.add_parser("config", help="API 키 설정")
+    p.set_defaults(func=run_config)
 
     p = sub.add_parser("doctor", help="PRD 스타일의 VibeLign 프로젝트 진단")
     p.add_argument("--json", action="store_true")
@@ -74,6 +94,17 @@ def build_parser():
     p.add_argument("--since-minutes", type=int, default=120)
     p.add_argument("--write-report", action="store_true")
     p.set_defaults(func=run_vib_guard)
+
+    p = sub.add_parser("export", help="도우미 템플릿 내보내기")
+    p.add_argument("tool", choices=["claude", "opencode", "cursor", "antigravity"])
+    p.set_defaults(func=run_export)
+
+    p = sub.add_parser("watch", help="실시간 구조 모니터링")
+    p.add_argument("--strict", action="store_true")
+    p.add_argument("--write-log", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--debounce-ms", type=int, default=800)
+    p.set_defaults(func=run_watch_cmd)
 
     return parser
 

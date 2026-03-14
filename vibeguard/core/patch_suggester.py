@@ -54,10 +54,30 @@ def _score_anchor_names(anchor_names, request_tokens, label):
         al = anchor.lower()
         local_score = 0
         local_matches = []
+        match_count = 0
         for token in request_tokens:
             if token in al:
                 local_score += 3
+                match_count += 1
                 local_matches.append(token)
+        if label == "추천 앵커":
+            if anchor.startswith("_"):
+                local_score -= 2
+            if any(
+                part in al
+                for part in [
+                    "load",
+                    "get",
+                    "build",
+                    "run",
+                    "parse",
+                    "flush",
+                    "normalize",
+                ]
+            ):
+                local_score -= 1
+            if match_count < 2:
+                local_score -= 3
         if local_score > 0:
             score = max(score, local_score)
             joined = ", ".join(dict.fromkeys(local_matches))
@@ -173,14 +193,30 @@ def choose_suggested_anchor(suggested_anchors, request_tokens):
         score = 0
         rationale = []
         al = anchor.lower()
+        match_count = 0
         for token in request_tokens:
             if token in al:
                 score += 3
+                match_count += 1
                 rationale.append(f"추천 앵커에 키워드 '{token}'이 포함됨")
+        if anchor.startswith("_"):
+            score -= 2
+            rationale.append("내부 helper 성격 이름이라 우선순위 낮춤")
+        if any(
+            part in al
+            for part in ["load", "get", "build", "run", "parse", "flush", "normalize"]
+        ):
+            score -= 1
+            rationale.append("범용 helper 성격 이름이라 우선순위 낮춤")
+        if match_count < 2:
+            score -= 3
+            rationale.append("요청 키워드가 충분히 많이 맞지 않아 추천 강도를 낮춤")
         if score > best_score:
             best_score = score
             best_anchor = anchor
             best_rationale = rationale or [f"추천 앵커 중 '{anchor}'가 가장 적합함"]
+    if best_score <= 0:
+        return None, ["의미 있게 맞는 추천 앵커를 찾지 못했습니다"]
     return best_anchor, best_rationale
 
 

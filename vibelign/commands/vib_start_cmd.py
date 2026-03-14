@@ -6,12 +6,14 @@ from vibelign.commands.vib_doctor_cmd import build_doctor_envelope
 from vibelign.commands.vib_init_cmd import run_vib_init
 from vibelign.core.hook_setup import detect_tool, is_hook_set, setup_hook_if_needed
 from vibelign.core.meta_paths import MetaPaths
-from vibelign.terminal_render import print_ai_response, should_use_rich
+from vibelign.terminal_render import (
+    clack_info,
+    clack_intro,
+    clack_outro,
+    clack_step,
+    clack_success,
+)
 
-
-
-from vibelign.terminal_render import cli_print
-print = cli_print
 
 def _status_line(status: str) -> str:
     if status in {"Safe", "Good"}:
@@ -52,67 +54,15 @@ def _ensure_rule_files(root: Path) -> Dict[str, List[str]]:
     return {"created": created, "skipped": skipped}
 
 
-def _build_output(
-    init_result: Optional[Dict[str, List[str]]],
-    hook_label: Optional[str],
-    hook_active: bool,
-    git_active: bool,
-    doctor_data: Dict[str, Any],
-) -> str:
-    sections: List[str] = []
-
-    # 초기 설정 섹션 (첫 실행 때만)
-    if init_result is not None:
-        lines = ["## 초기 설정"]
-        for f in init_result.get("created", []):
-            lines.append(f"- {f}  ← 새로 생성됨")
-        for f in init_result.get("skipped", []):
-            lines.append(f"- {f}  ← 이미 있음, 유지")
-        sections.append("\n".join(lines))
-
-    # AI 도구 연동 섹션
-    if hook_label and hook_active:
-        lines = [
-            "## AI 도구 연동",
-            f"- {hook_label} 훅 활성화됨",
-            "- AI가 파일을 수정하면 자동으로 checkpoint 가 저장돼요",
-        ]
-        sections.append("\n".join(lines))
-    elif not hook_active and not git_active:
-        lines = [
-            "## 변경사항 추적 안내",
-            "- AI 작업이 끝날 때마다 `vib checkpoint` 를 실행하면",
-            "  `vib explain` 으로 무엇이 바뀌었는지 확인할 수 있어요",
-            "- git 을 사용하면 별도 명령어 없이 자동 추적돼요",
-        ]
-        sections.append("\n".join(lines))
-
-    # 프로젝트 상태 섹션
-    score = doctor_data["project_score"]
-    status = doctor_data["status"]
-    next_step = _next_step(doctor_data)
-    lines = [
-        "## 프로젝트 상태",
-        f"점수: {score} / 100",
-        "",
-        _status_line(status),
-        "",
-        f"다음 할 일: {next_step}",
-    ]
-    sections.append("\n".join(lines))
-
-    return "\n\n".join(sections)
-
-
 def run_vib_start(args: Any) -> None:
     root = Path.cwd()
     meta = MetaPaths(root)
+    clack_intro("VibeLign 시작 설정")
 
     # [1] 첫 실행이면 전체 init, 기존 프로젝트면 룰 파일만 보장
     init_result: Optional[Dict[str, List[str]]] = None
     if not meta.state_path.exists():
-        print("처음 사용하는 프로젝트예요. 기본 설정을 만들어드릴게요.")
-        print()
+        clack_step("처음 사용하는 프로젝트예요. 기본 설정을 준비할게요.")
         init_result = run_vib_init(SimpleNamespace())
     else:
         # 기존 프로젝트라도 AI 룰 파일이 없으면 자동 생성 (state.json 등은 건드리지 않음)
@@ -130,15 +80,32 @@ def run_vib_start(args: Any) -> None:
     git_active = _has_git(root)
 
     # [4] Rich 패널 출력
-    print()
+    clack_step("프로젝트 상태를 확인하는 중...")
     doctor_envelope = build_doctor_envelope(root, strict=False)
     doctor_data = doctor_envelope["data"]
 
-    output_text = _build_output(
-        init_result=init_result,
-        hook_label=hook_label,
-        hook_active=hook_active,
-        git_active=git_active,
-        doctor_data=doctor_data,
-    )
-    print_ai_response(output_text)
+    if init_result is not None:
+        clack_step("초기 설정")
+        for f in init_result.get("created", []):
+            clack_success(f"생성됨: {f}")
+        for f in init_result.get("skipped", []):
+            clack_info(f"유지됨: {f}")
+
+    if hook_label and hook_active:
+        clack_step("AI 도구 연동")
+        clack_success(f"{hook_label} 훅이 활성화돼요")
+        clack_info("AI가 파일을 수정하면 자동으로 checkpoint가 저장돼요")
+    elif not hook_active and not git_active:
+        clack_step("변경사항 추적 안내")
+        clack_info(
+            "AI 작업 후 `vib checkpoint`를 실행하면 변경 내역을 안전하게 남길 수 있어요"
+        )
+        clack_info("git을 사용하면 별도 명령어 없이 자동 추적돼요")
+
+    score = doctor_data["project_score"]
+    status = doctor_data["status"]
+    next_step = _next_step(doctor_data)
+    clack_step("프로젝트 상태")
+    clack_info(f"점수: {score} / 100")
+    clack_info(_status_line(status))
+    clack_outro(f"다음 할 일: {next_step}")

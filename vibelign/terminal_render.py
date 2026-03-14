@@ -5,6 +5,8 @@ import sys
 import builtins
 from typing import Any, Optional, cast
 
+_ONBOARDING_STYLE_ENV = "VIBELIGN_ONBOARDING_STYLE"
+
 
 def _load_rich() -> Optional[dict[str, Any]]:
     try:
@@ -373,6 +375,58 @@ def cli_print(
             return
 
     plain_print(text)
+
+
+def _clack_line(
+    symbol: str, message: str, style: str, console: Optional[Any] = None
+) -> None:
+    plain_print = builtins.print
+    onboarding_style = (
+        (os.environ.get(_ONBOARDING_STYLE_ENV) or "clack").strip().lower()
+    )
+
+    if onboarding_style != "clack":
+        cli_print(message)
+        return
+
+    line = f"{symbol} {message}"
+    if not should_use_rich():
+        plain_print(line)
+        return
+    rich_mod = _load_rich()
+    if rich_mod is None:
+        plain_print(line)
+        return
+    rich_console = _get_console(rich_mod, console)
+    rich_console.print(rich_mod["Text"](line, style=style))
+
+
+def clack_intro(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("◆", message, "bold cyan", console)
+
+
+def clack_step(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("◌", message, "cyan", console)
+
+
+def clack_info(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("•", message, "white", console)
+
+
+def clack_success(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("✔", message, "bold green", console)
+
+
+def clack_warn(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("▲", message, "bold yellow", console)
+
+
+def clack_error(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("✖", message, "bold red", console)
+
+
+def clack_outro(message: str, console: Optional[Any] = None) -> None:
+    _clack_line("◆", message, "bold magenta", console)
 
 
 def print_cli_help(message: str, console: Optional[Any] = None) -> None:

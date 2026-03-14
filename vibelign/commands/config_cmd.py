@@ -6,7 +6,17 @@ from pathlib import Path
 from typing import Optional
 
 
-from vibelign.terminal_render import cli_print
+from vibelign.terminal_render import (
+    clack_error,
+    clack_info,
+    clack_intro,
+    clack_outro,
+    clack_step,
+    clack_success,
+    clack_warn,
+    cli_print,
+)
+
 print = cli_print
 
 _DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"
@@ -119,11 +129,11 @@ def _fetch_gemini_models(api_key: str) -> list[str]:
 
 
 def _select_gemini_model(api_key: Optional[str], current_model: str) -> Optional[str]:
-    print("Gemini 모델 설정 (선택사항)")
+    clack_step("Gemini 모델 설정 (선택사항)")
     if current_model:
-        print(f"현재 GEMINI_MODEL: {current_model}")
+        clack_info(f"현재 GEMINI_MODEL: {current_model}")
     else:
-        print(f"현재 GEMINI_MODEL: 기본값 사용 ({_DEFAULT_GEMINI_MODEL})")
+        clack_info(f"현재 GEMINI_MODEL: 기본값 사용 ({_DEFAULT_GEMINI_MODEL})")
 
     models = []
     source_label = "기본 추천 목록"
@@ -133,19 +143,19 @@ def _select_gemini_model(api_key: Optional[str], current_model: str) -> Optional
             if models:
                 source_label = "Google AI Studio 공식 사용 가능 모델"
             else:
-                print(
+                clack_warn(
                     "Google AI Studio 모델 목록이 비어 있어 기본 추천 목록을 보여줍니다."
                 )
         except Exception:
             models = []
-            print(
+            clack_warn(
                 "Google AI Studio 모델 목록을 가져오지 못해 기본 추천 목록을 보여줍니다."
             )
 
     if not models:
         models = list(_GEMINI_MODEL_FALLBACKS)
 
-    print(f"모델 목록: {source_label}")
+    clack_info(f"모델 목록: {source_label}")
     for i, model in enumerate(models, 1):
         note = ""
         if model == _DEFAULT_GEMINI_MODEL:
@@ -175,32 +185,28 @@ def _select_gemini_model(api_key: Optional[str], current_model: str) -> Optional
         if clear_choice and choice_num == clear_choice:
             return _CLEAR_GEMINI_MODEL
 
-    print("잘못된 선택입니다. Gemini 모델 설정을 건너뜁니다.")
+    clack_warn("잘못된 선택입니다. Gemini 모델 설정을 건너뜁니다.")
     return None
 
 
 def run_config(args):
-    print("=" * 50)
-    print("  VibeLign API 키 설정")
-    print("=" * 50)
-    print()
+    clack_intro("VibeLign API 키 설정")
 
     # 현재 상태 표시
-    print("현재 상태:")
+    clack_step("현재 상태")
     for p in _PROVIDERS:
         is_set = bool(os.environ.get(p["key_name"]))
         status = "✓ 설정됨" if is_set else "✗ 없음"
-        print(f"  {p['key_name']:<22}: {status}")
+        clack_info(f"{p['key_name']:<22}: {status}")
     gemini_model = (os.environ.get("GEMINI_MODEL") or "").strip()
     if gemini_model:
         model_status = f"✓ 사용자 설정 ({gemini_model})"
     else:
         model_status = f"기본값 사용 ({_DEFAULT_GEMINI_MODEL})"
-    print(f"  {'GEMINI_MODEL':<22}: {model_status}")
-    print()
+    clack_info(f"{'GEMINI_MODEL':<22}: {model_status}")
 
     # 제공자 선택
-    print("설정할 AI 서비스를 선택하세요:")
+    clack_step("설정할 AI 서비스를 선택하세요")
     for i, p in enumerate(_PROVIDERS, 1):
         print(f"  {i}. {p['label']:<22} ({p['url']})")
     print(f"  {len(_PROVIDERS) + 1}. 전체")
@@ -210,13 +216,13 @@ def run_config(args):
     choice = input(f"선택 (0-{len(_PROVIDERS) + 1}): ").strip()
 
     if choice == "0" or not choice:
-        print("취소했습니다.")
+        clack_warn("취소했습니다.")
         return
 
     try:
         choice_num = int(choice)
     except ValueError:
-        print("잘못된 선택입니다.")
+        clack_error("잘못된 선택입니다.")
         return
 
     if choice_num == len(_PROVIDERS) + 1:
@@ -224,7 +230,7 @@ def run_config(args):
     elif 1 <= choice_num <= len(_PROVIDERS):
         selected = [_PROVIDERS[choice_num - 1]]
     else:
-        print("잘못된 선택입니다.")
+        clack_error("잘못된 선택입니다.")
         return
 
     includes_gemini = any(p["id"] == "gemini" for p in selected)
@@ -237,7 +243,7 @@ def run_config(args):
             f"{p['label']} API 키를 입력하세요 (입력 내용은 표시되지 않습니다): "
         ).strip()
         if not api_key:
-            print(f"  → {p['label']} 키 입력을 건너뜁니다.")
+            clack_warn(f"{p['label']} 키 입력을 건너뜁니다.")
             continue
         collected[p["key_name"]] = api_key
 
@@ -253,13 +259,13 @@ def run_config(args):
             collected["GEMINI_MODEL"] = gemini_model
 
     if not collected:
-        print("설정할 값이 없습니다.")
+        clack_warn("설정할 값이 없습니다.")
         return
 
     # 영구/임시 선택
     profile = _get_shell_profile()
     print()
-    print("저장 방식을 선택하세요:")
+    clack_step("저장 방식을 선택하세요")
     print(f"  1. 영구 저장 ({profile} 에 저장, 새 터미널에서도 유지)")
     print("  2. 임시 저장 (현재 터미널 세션에서만 유효한 명령어 출력)")
     print()
@@ -270,20 +276,20 @@ def run_config(args):
     if save_choice == "1":
         for key_name, api_key in collected.items():
             _save_to_profile(profile, key_name, api_key)
-            print(f"✓ {key_name} → {profile} 에 저장됨")
+            clack_success(f"{key_name} → {profile} 에 저장됨")
         print()
-        print("적용하려면 새 터미널을 열거나 아래 명령어를 실행하세요:")
-        print(f"  source {profile}")
+        clack_info("적용하려면 새 터미널을 열거나 아래 명령어를 실행하세요:")
+        clack_info(f"source {profile}")
     elif save_choice == "2":
-        print("아래 명령어를 현재 터미널에 복사해서 실행하세요:")
+        clack_info("아래 명령어를 현재 터미널에 복사해서 실행하세요:")
         print()
         for key_name, api_key in collected.items():
             print(f'  export {key_name}="{api_key}"')
         print()
-        print("(새 터미널을 열면 다시 입력해야 합니다)")
+        clack_warn("새 터미널을 열면 다시 입력해야 합니다")
     else:
-        print("잘못된 선택입니다.")
+        clack_error("잘못된 선택입니다.")
         return
 
-    print()
-    print("✓ 설정 완료! 이제 'vib ask 파일명' 을 실행하면 AI가 바로 설명합니다.")
+    clack_outro("설정 완료")
+    clack_info("이제 'vib ask 파일명'을 실행하면 AI가 바로 설명합니다.")

@@ -5,7 +5,17 @@ import sys
 from pathlib import Path
 
 
-from vibelign.terminal_render import cli_print
+from vibelign.terminal_render import (
+    clack_error,
+    clack_info,
+    clack_intro,
+    clack_outro,
+    clack_step,
+    clack_success,
+    clack_warn,
+    cli_print,
+)
+
 print = cli_print
 
 _MIN_PYTHON = (3, 9)
@@ -46,19 +56,19 @@ _UV_INSTALL_CMD = {
 
 
 def _ok(msg: str) -> None:
-    print(f"  ✓ {msg}")
+    clack_success(msg)
 
 
 def _step(msg: str) -> None:
-    print(f"  → {msg}")
+    clack_step(msg)
 
 
 def _warn(msg: str) -> None:
-    print(f"  ⚠  {msg}")
+    clack_warn(msg)
 
 
 def _fail(msg: str) -> None:
-    print(f"  ✗ {msg}")
+    clack_error(msg)
 
 
 def _korean_error(result: subprocess.CompletedProcess[str]) -> str:
@@ -80,7 +90,7 @@ def _check_python() -> bool:
             f"Python {cur[0]}.{cur[1]} 이에요. "
             f"{_MIN_PYTHON[0]}.{_MIN_PYTHON[1]} 이상이 필요해요."
         )
-        print("    python.org 에서 최신 Python을 설치해보세요.")
+        clack_info("python.org 에서 최신 Python을 설치해보세요.")
         return False
     _ok(f"Python {cur[0]}.{cur[1]}")
     return True
@@ -134,7 +144,7 @@ def _check_uv() -> bool:
     if result.returncode != 0:
         _fail("uv 설치에 실패했어요.")
         hint = _korean_error(result)
-        print(f"    {hint or _ERR['uv_fail']}")
+        clack_info(hint or _ERR["uv_fail"])
         return False
 
     # 설치 후 현재 세션 PATH 반영 여부 확인
@@ -188,50 +198,40 @@ def _reinstall(use_uv: bool, force: bool) -> bool:
         )
         if already and not force:
             _ok("이미 최신 버전이에요")
-            print("    강제로 다시 설치하려면: vib init --force")
+            clack_info("강제로 다시 설치하려면: vib init --force")
         else:
             _ok("vibelign 재설치 완료")
         return True
 
     _fail("vibelign 재설치에 실패했어요.")
     hint = _korean_error(result)
-    print(f"    {hint or _ERR['reinstall_fail']}")
+    clack_info(hint or _ERR["reinstall_fail"])
     return False
 
 
 def run_init(args) -> None:
     force = getattr(args, "force", False)
 
-    print("=" * 50)
-    print("  VibeLign 업데이트 / 재설치")
-    print("=" * 50)
-    print()
+    clack_intro("VibeLign 업데이트 / 재설치")
 
-    print("[1/4] Python 버전 확인")
+    clack_step("1/4 Python 버전 확인")
     if not _check_python():
         return
-    print()
 
-    print("[2/4] pip 확인")
+    clack_step("2/4 pip 확인")
     if not _check_pip():
         return
-    print()
 
-    print("[3/4] uv 확인")
+    clack_step("3/4 uv 확인")
     uv_ready = _check_uv()
-    print()
 
-    print("[4/4] vibelign 재설치")
+    clack_step("4/4 vibelign 재설치")
     success = _reinstall(use_uv=uv_ready, force=force)
-    print()
 
-    print("=" * 50)
     if success:
-        print("✓ 완료!")
-        print()
-        print("  지금 터미널을 닫고 새로 열어야 새 버전이 적용돼요.")
-        print("  그 다음: vib start")
+        clack_outro("설치가 끝났어요")
+        clack_info("지금 터미널을 닫고 새로 열어야 새 버전이 적용돼요.")
+        clack_info("그 다음: vib start")
     else:
-        print("✗ 재설치 중 문제가 생겼어요.")
-        print("  위의 안내를 따라 해결해보세요.")
-    print("=" * 50)
+        clack_error("재설치 중 문제가 생겼어요.")
+        clack_info("위의 안내를 따라 해결해보세요.")

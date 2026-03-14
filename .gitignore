@@ -22,6 +22,7 @@ VIBEGUARD_PATCH_REQUEST.md
 VIBEGUARD_EXPLAIN.md
 VIBEGUARD_GUARD.md
 vibeguard_exports/
+.vibelign/
 
 # IDE
 .vscode/

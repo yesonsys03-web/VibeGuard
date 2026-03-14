@@ -13,6 +13,7 @@ dependencies = ["anthropic>=0.40.0", "rich>=13.9.0"]
 
 [project.scripts]
 vibeguard = "vibeguard.cli:main"
+vib = "vibeguard.vib_cli:main"
 
 [tool.setuptools.packages.find]
 include = ["vibeguard*"]

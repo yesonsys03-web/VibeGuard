@@ -11,10 +11,10 @@ from vibelign.core.risk_analyzer import analyze_project
 
 
 STATUS_LEVELS = [
-    (90, "Safe"),
-    (75, "Good"),
-    (55, "Caution"),
-    (35, "Risky"),
+    (85, "Safe"),
+    (70, "Good"),
+    (50, "Caution"),
+    (30, "Risky"),
     (0, "High Risk"),
 ]
 

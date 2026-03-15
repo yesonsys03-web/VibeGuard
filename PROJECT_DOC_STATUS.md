@@ -44,9 +44,9 @@ If a planning document conflicts with current code behavior:
 | --- | --- | --- | --- | --- |
 | `PROJECT_DOC_STATUS.md` | Documentation entry point | active | highest | Start here first |
 | `VibeLign_dev_plan/vibelign_FINAL_COMPLETE_PRD/` | Final product planning for VibeLign | active | planning source of truth | Use for future design decisions |
-| `README.md` | Current project overview | migration-needed | implementation reference | Still branded as VibeLign |
-| `docs/MANUAL.md` | Current user manual | migration-needed | implementation reference | Describes current CLI behavior |
-| `VibeLign_QUICKSTART.md` | Current onboarding guide | migration-needed | implementation reference | Keep aligned with shipped commands |
+| `README.md` | Current project overview | active | implementation reference | Aligned with `vib` CLI name and PRD direction |
+| `docs/MANUAL.md` | Current user manual | active | implementation reference | Aligned with `vib` CLI name and PRD direction |
+| `VibeLign_QUICKSTART.md` | Current onboarding guide | active | implementation reference | Aligned with `vib` CLI name and PRD direction |
 | `VIBELIGN_PATCH_REQUEST.md` | Generated working artifact | reference | none | Not a planning source |
 | `VIBELIGN_EXPLAIN.md` | Generated working artifact | reference | none | Not a planning source |
 | `VIBELIGN_GUARD.md` | Generated working artifact | reference | none | Not a planning source |
